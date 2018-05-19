@@ -47,7 +47,6 @@ float k = 30; //Spring constant
 float damping = 10; //Damping constant
 float timeStep = 0.07;
 
-
 struct hair{
     float x1;
     float y1;
@@ -70,19 +69,11 @@ struct hair hair7 = {.x1=0.1,.y1=0.15,.x2=5,.y2=9,.velocityX = 0 ,.velocityY=0,.
 struct hair hair8 = {.x1=0.15,.y1=0.5,.x2=1,.y2=12,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = .0f};
 vector<struct hair> hairs;
 
-void SelectFromMenu(int idCommand)
-{
-
-}
-
 void handleKeypress(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27: //Escape key
 			exit(0);
-        case 'q':
-
-        case 'w':
-	}
+    }
 }
 
 static BOOL g_bButton1Down = FALSE;
