@@ -26,11 +26,11 @@ float anchorX = 0;
 float anchorY = 0;
 float mass = 0.2;
 float gravity = -10;
-float k = 100; //Spring constant
+float k = 50; //Spring constant
 float damping = 5; //Damping constant
 float timeStep = 0.01;
-int segment = 20;
-float segmentLen = 0.1;
+int segment = 15;
+float segmentLen = 0.3;
 float headRadius = 0.5;
 
 float RandomFloat(float a, float b) {
@@ -265,8 +265,6 @@ void update(int value) {
             float sy = hairs[i].particles[j].second - hairs[i].particles[j-1].second;
             float sx = hairs[i].particles[j].first - hairs[i].particles[j-1].first;
 
-            //if (sy>1.1*segmentLen) sy=1.1*segmentLen;
-            //if (sx>1.1*segmentLen) sx=1.1*segmentLen;
             float springForceY1 = -k*(sy);
             float springForceX1 = -k*(sx);
 
@@ -299,12 +297,33 @@ void update(int value) {
             float posY = hairs[i].seg[j].y + velocityY * timeStep;
             float posX = hairs[i].seg[j].x + velocityX * timeStep;
 
+            //constraint
+            float prevX = hairs[i].particles[j].first;
+            float prevY = hairs[i].particles[j].second;
+
+            float vecX = (posX - prevX);
+            float vecY = (posY - prevY);
+            float len = sqrt((vecX*vecX) + (vecY*vecY));
+            if(len>segmentLen){
+                //Normalize
+                vecX = (vecX/len)*segmentLen;
+                vecY = (vecY/len)*segmentLen;
+
+                posX = prevX + vecX;
+                posY = prevY + vecY;
+            }
+
+            //Wall collision
             if (posX>8 || posX<-8) {
-                velocityX= -(velocityX);
+                velocityX = -0.5*(velocityX)+ accelerationX*timeStep;
+                velocityY += accelerationY*timeStep;
                 posX = hairs[i].seg[j].x + velocityX * timeStep;
+                posY = hairs[i].seg[j].y + velocityY * timeStep;
             }
             if (posY>8 || posY<-8) {
-                velocityY= -(velocityY);
+                velocityY = -0.5*(velocityY)+ accelerationY*timeStep;
+                velocityX += accelerationX*timeStep;
+                posX = hairs[i].seg[j].x + velocityX * timeStep;
                 posY = hairs[i].seg[j].y + velocityY * timeStep;
             }
 
