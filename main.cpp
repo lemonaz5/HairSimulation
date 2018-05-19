@@ -1,26 +1,9 @@
-/* Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above notice and this permission notice shall be included in all copies
- * or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+/*
+Hair Simulation
+This code is edited by Vorawee and Wannita
+For presenting in Realtime CG Physics Sim 2017
+With AJ. Nuttapong Chentanez
  */
-/* File for "Putting It All Together" lesson of the OpenGL tutorial on
- * www.videotutorialsrock.com
- */
-
-
 
 #include <iostream>
 #include <stdlib.h>
@@ -41,34 +24,76 @@ float x = 5;
 float y = 5;
 float anchorX = 0;
 float anchorY = 0;
-float mass = 5;
+float mass = 0.2;
 float gravity = -10;
-float k = 30; //Spring constant
+float k = 100; //Spring constant
 float damping = 10; //Damping constant
-float timeStep = 0.07;
+float timeStep = 0.01;
+int segment = 20;
+float segmentLen = 0.1;
+float headRadius = 0.25;
 
 
-struct hair{
-    float x1;
-    float y1;
-    float x2;
-    float y2;
-    float velocityX;
-    float velocityY;
-    float r;
-    float g;
-    float b;
+class HairSegment{
+    public:
+        float x;
+        float y;
+        float velocityX;
+        float velocityY;
+        HairSegment (float x1, float y1,float vX,float vY){
+            x = x1; y = y1; velocityX = vX; velocityY = vY;
+        }
 };
 
-struct hair hair1 = {.x1=0,.y1=0,.x2=10,.y2=5,.velocityX = 0 ,.velocityY=0,.r = 1.0f,.g = 0.0f,.b = 0.0f};
-struct hair hair2 = {.x1=0.25,.y1=0,.x2=-5,.y2=16,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 1.0f,.b = 0.0f};
-struct hair hair3 = {.x1=-0.1,.y1=0.25,.x2=-5,.y2=15,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = 1.0f};
-struct hair hair4 = {.x1=0.1,.y1=0.5,.x2=-1,.y2=1,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = 1.0f};
-struct hair hair5 = {.x1=0.24,.y1=0.35,.x2=10,.y2=10,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = .0f};
-struct hair hair6 = {.x1=0.,.y1=0.25,.x2=15,.y2=17,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = .0f};
-struct hair hair7 = {.x1=0.1,.y1=0.15,.x2=5,.y2=9,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = .0f};
-struct hair hair8 = {.x1=0.15,.y1=0.5,.x2=1,.y2=12,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = .0f};
-vector<struct hair> hairs;
+class Hair{
+    public:
+        float x; //Anchor
+        float y; //Anchor
+        float r;
+        float g;
+        float b;
+        vector<HairSegment> seg;
+        vector<pair<float,float>> particles;
+        Hair (){
+            float maxX = anchorX + headRadius;
+            float minX = anchorX - headRadius;
+            x = (minX) + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
+            float maxY = anchorY + sqrt(headRadius*headRadius - (x*x));
+            float minY = anchorY - sqrt(headRadius*headRadius - (x*x));
+            y = maxY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
+
+            particles.push_back(make_pair(x,y));
+
+            /*
+            r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+            g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+            b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+*/
+            r = 1.0f;
+            g = 0.0f;
+            b = 0.0f;
+
+            createSeg(segment,segmentLen);
+        }
+        Hair (float x1, float y1,float r1,float g1,float b1){
+            x = x1; y = y1; r = r1; g = g1; b = b1;
+            particles.push_back(make_pair(x1,y1));
+        }
+        void set_val (float x1, float y1,float r1,float g1,float b1){
+            x = x1; y = y1; r = r1; g = g1; b = b1;
+        }
+        void createSeg(int s, float len){
+            for(int i = 0;i<s;i++){
+                HairSegment h (x+0.5, particles[i].second-len, 0.0f, 0.0f);
+                seg.push_back(h);
+                particles.push_back(make_pair(x,particles[i].second-len));
+            }
+
+        }
+};
+
+vector<Hair> hairs;
+
 
 void handleKeypress(unsigned char key, int x, int y) {
 	switch (key) {
@@ -113,8 +138,11 @@ void MouseMotion(int x, int y)
         }else{
             anchorY += (g_yClick - y)*0.0005 ;
             for (int i = 0; i<hairs.size();i++){
-                if((anchorY<7.9) && (anchorY>-7.9)) hairs[i].y1 += (g_yClick - y)*0.0005;
-                else hairs[i].y1 = hairs[i].y1;
+                if((anchorY<7.9) && (anchorY>-7.9)){
+                    hairs[i].y += (g_yClick-y)*0.0005;
+                    hairs[i].particles[0].second += (g_yClick-y)*0.0005;
+                }
+ /*               else hairs[i].y1 = hairs[i].y1;*/
             }
         }
 
@@ -131,14 +159,18 @@ void MouseMotion(int x, int y)
         }else{
             anchorX += (x-g_xClick)*0.0005 ;
             for (int i = 0; i<hairs.size();i++){
-                if((anchorX<8) && (anchorX>-8)) hairs[i].x1 += (x-g_xClick)*0.0005;
-                else hairs[i].x1 = hairs[i].x1;
+                if((anchorX<8) && (anchorX>-8)){
+                    hairs[i].x += (x-g_xClick)*0.0005;
+                    hairs[i].particles[0].first += (x-g_xClick)*0.0005;
+                }
+ /*               else{
+                    hairs[i].x1 = hairs[i].x1;
+                }*/
             }
         }
         //cout << "X" << x << "Y" << y << endl;
-        cout << "xcli" << g_xClick-x << "  ycli" << g_yClick-y<< endl;
-        cout << "hair x " << hairs[0].x1 << " y " << hairs[0].y1 << endl;
-
+   /*     cout << "xcli" << g_xClick-x << "  ycli" << g_yClick-y<< endl;
+        cout << "hair x " << hairs[0].x1 << " y " << hairs[0].y1 << endl;*/
 		glutPostRedisplay();
 	}
 }
@@ -174,20 +206,23 @@ void drawScene() {
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 
     //First Hair
-    for(int i = 0;i<hairs.size(); i++){
-        glLineWidth(1.0);
-        glBegin(GL_LINES);
-        glColor3f(hairs[i].r,hairs[i].g,hairs[i].b);
-        glVertex2f(hairs[i].x1, hairs[i].y1);
-        glVertex2f(hairs[i].x2, hairs[i].y2);
-        glEnd();
+    for(unsigned i = 0;i < hairs.size(); i++){
+        for(int j = 0; j < hairs[i].particles.size()-1; j++){ //Loop every particles - last particle
+            glLineWidth(1.0);
+            glBegin(GL_LINES);
+            glColor3f(hairs[i].r,hairs[i].g,hairs[i].b);
+            glVertex2f(hairs[i].particles[j].first, hairs[i].particles[j].second);
+            glVertex2f(hairs[i].particles[j+1].first, hairs[i].particles[j+1].second);
+            glEnd();
+        }
     }
+
 
     //Sphere Anchor
     glPushMatrix();
     glTranslatef(anchorX,anchorY,0.0f);
     glColor3f(0.0f, 0.0f, 0.0f);
-    glutSolidSphere(0.7, 15, 15);
+    glutSolidSphere(headRadius+0.45, 15, 15);
     glPopMatrix();
 
     //Background
@@ -205,32 +240,86 @@ void drawScene() {
 void update(int value) {
     //hairs.push_back(hair1);
     for(int i=0;i<hairs.size();i++){
-        float springForceY = -k*(hairs[i].y2 - hairs[i].y1);
-        float springForceX = -k*(hairs[i].x2 - hairs[i].x1);
+        vector<float> springForceY, springForceX; //of each segments in a hair
+        vector<float> dampingForceY, dampingForceX;
 
-        float dampingForceY = damping * hairs[i].velocityY;
-        float dampingForceX = damping * hairs[i].velocityX;
+        //First segment
+        float springForceY0 = -k*(hairs[i].seg[0].y - hairs[i].y);
+        float springForceX0 = -k*(hairs[i].seg[0].x - hairs[i].x);
 
-        float forceY = springForceY + mass * gravity  - dampingForceY;
-        float forceX = springForceX - dampingForceX;
+        float dampingForceY0 = damping * hairs[i].seg[0].velocityY;
+        float dampingForceX0 = damping * hairs[i].seg[0].velocityX;
 
-        float accelerationY = forceY/mass;
-        float accelerationX = forceX/mass;
+        springForceY.push_back(springForceY0);
+        springForceX.push_back(springForceX0);
+        dampingForceY.push_back(dampingForceY0);
+        dampingForceX.push_back(dampingForceX0);
 
-        hairs[i].velocityY += accelerationY*timeStep;
-        hairs[i].velocityX += accelerationX*timeStep;
+        for(int j=1; j<hairs[i].seg.size() ;j++){
+            float springForceY1 = -k*(hairs[i].seg[j].y - hairs[i].seg[j-1].y);
+            float springForceX1 = -k*(hairs[i].seg[j].x - hairs[i].seg[j-1].x);
 
-        hairs[i].x2 += hairs[i].velocityX*timeStep;
-        hairs[i].y2 += hairs[i].velocityY*timeStep;
+            float dampingForceY1 = damping * hairs[i].seg[j].velocityY;
+            float dampingForceX1 = damping * hairs[i].seg[j].velocityX;
 
-        /*cout<<"springForceY = "<<springForceY;
+            springForceY.push_back(springForceY1);
+            springForceX.push_back(springForceX1);
+            dampingForceY.push_back(dampingForceY1);
+            dampingForceX.push_back(dampingForceX1);
+        }
+
+        //Net force
+        for(int j=0; j<hairs[i].seg.size() ;j++){
+            float prevX = hairs[i].particles[j].first;
+            float prevY = hairs[i].particles[j].second;
+
+            float thisX = hairs[i].particles[j+1].first;
+            float thisY = hairs[i].particles[j+1].second;
+
+            float len = sqrt((prevX - thisX)*(prevX - thisX) + (prevY - thisY)*(prevY - thisY));
+/*
+            if(len > segmentLen){
+                float cosine = /len;
+
+            }*/
+            float forceY1 = springForceY[j] + mass * gravity  - dampingForceY[j];
+            float forceX1 = springForceX[j] - dampingForceX[j];
+
+            //Every segment but the last one
+            if(j<hairs[i].seg.size()-1){
+                forceY1 += -springForceY[j+1] + dampingForceY[j+1];
+                forceX1 += -springForceX[j+1] + dampingForceX[j+1];
+            }
+
+            float accelerationY = forceY1/mass;
+            float accelerationX = forceX1/mass;
+
+            float velocityY = hairs[i].seg[j].velocityY + accelerationY*timeStep;
+            float velocityX = hairs[i].seg[j].velocityX + accelerationX*timeStep;
+
+            float posY = hairs[i].seg[j].y + velocityY * timeStep;
+            float posX = hairs[i].seg[j].x + velocityX * timeStep;
+
+            //update in hair
+            hairs[i].seg[j].velocityY = velocityY;
+            hairs[i].seg[j].velocityX = velocityX;
+
+            hairs[i].seg[j].y = posY;
+            hairs[i].seg[j].x = posX;
+
+            hairs[i].particles[j+1].first = posX;
+            hairs[i].particles[j+1].second = posY;
+
+
+        }
+/*
+        cout<<"springForceY = "<<springForceY;
         cout<<"forceY = "<<forceY;
         cout<<"accelerationY = "<<accelerationY;
         cout<<"hair1.velocityY = "<<hairs[i].velocityY;
         cout<<"y2 = "<<hairs[i].y2;
         cout<<"DDD"<<hairs[i].y2;
-        cout<<"\n";
-        */
+        cout<<"\n";*/
     }
 
 	glutPostRedisplay();
@@ -238,14 +327,12 @@ void update(int value) {
 }
 
 int main(int argc, char** argv) {
-    hairs.push_back(hair1);
-    hairs.push_back(hair2);
-    hairs.push_back(hair3);
-    hairs.push_back(hair4);
-    hairs.push_back(hair5);
-    hairs.push_back(hair6);
-    hairs.push_back(hair7);
-    hairs.push_back(hair8);
+    for(int i = 0; i< 3 + rand()%7 ; i++){
+        Hair h = Hair();
+        hairs.push_back(h);
+    }
+/*    Hair h = Hair();
+    hairs.push_back(h);*/
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);

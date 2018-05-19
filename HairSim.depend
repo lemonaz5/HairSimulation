@@ -235,3 +235,13 @@
 	<GLUT/glut.h>
 	<GL/glut.h>
 
+1526723368 source:c:\users\user\documents\github\hairsimulation\main.cpp
+	<iostream>
+	<stdlib.h>
+	<windows.h>
+	<math.h>
+	<vector>
+	<OpenGL/OpenGL.h>
+	<GLUT/glut.h>
+	<GL/glut.h>
+
