@@ -70,10 +70,18 @@ struct hair hair7 = {.x1=0.1,.y1=0.15,.x2=5,.y2=9,.velocityX = 0 ,.velocityY=0,.
 struct hair hair8 = {.x1=0.15,.y1=0.5,.x2=1,.y2=12,.velocityX = 0 ,.velocityY=0,.r = 0.0f,.g = 0.0f,.b = .0f};
 vector<struct hair> hairs;
 
+void SelectFromMenu(int idCommand)
+{
+
+}
+
 void handleKeypress(unsigned char key, int x, int y) {
 	switch (key) {
 		case 27: //Escape key
 			exit(0);
+        case 'q':
+
+        case 'w':
 	}
 }
 
@@ -251,7 +259,7 @@ int main(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(800, 800);
 
-	glutCreateWindow("Vorawee");
+	glutCreateWindow("Hair simulation");
 	initRendering();
 
 	glutDisplayFunc(drawScene);
